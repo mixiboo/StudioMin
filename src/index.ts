@@ -39,13 +39,15 @@ const client = new Client({
     partials: [Partials.Message,Partials.Channel,Partials.Reaction,Partials.User,Partials.GuildMember,Partials.ThreadMember,Partials.GuildScheduledEvent]
 });
 
-client.once(Events.ClientReady, () => {
+client.once(Events.ClientReady, async () => {
     console.log(`Discord bot is ready! 🤖`);
     console.log(`Logged in as ${client.user!.tag}!`);
     client.user?.setActivity('Activity', { type: 3 });
+
     console.log("Started refreshing application (/) commands.");
-    deployCommands();
+    await deployCommands();
     console.log("Successfully reloaded application (/) commands.");
+
     startScheduledJobs(client);
     restoreGiveaways(client);
     console.log("스케줄러가 시작되었습니다.");
@@ -58,7 +60,9 @@ client.on(Events.InteractionCreate, async (interaction) => {
             if (!command) return;
             await command.execute(interaction).catch(async (error) => {
                 console.error(`Error executing command ${interaction.commandName}:`, error);
-                if (!interaction.replied && !interaction.deferred) await interaction.reply({ content:'명령어 실행 중 오류가 발생했습니다.', ephemeral:true });
+                if (!interaction.replied && !interaction.deferred) {
+                    await interaction.reply({ content:'명령어 실행 중 오류가 발생했습니다.', ephemeral:true });
+                }
             });
             return;
         }
