@@ -1,5 +1,4 @@
-import { SlashCommandBuilder } from 'discord.js';
-import { ChatInputCommandInteraction, ChannelType, EmbedBuilder, AttachmentBuilder, TextChannel } from 'discord.js';
+import { SlashCommandBuilder, ChatInputCommandInteraction, ChannelType, EmbedBuilder, AttachmentBuilder, TextChannel, Collection, Message } from 'discord.js';
 import { ticketSystem } from '../utils/ticketSystem';
 import fs from 'fs';
 import path from 'path';
@@ -58,7 +57,8 @@ export async function closeTicket(interaction: ChatInputCommandInteraction | any
     if (logChannel && logChannel.type === ChannelType.GuildText) {
         try {
             const messages = await interaction.channel.messages.fetch({ limit: 100 });
-            const sortedMessages = Array.from(messages.values()).reverse();
+            const sortedMessages = Array.from(messages.values()) as Message[];
+            sortedMessages.reverse();
             const channelName = interaction.channel.type === ChannelType.GuildText ? (interaction.channel as TextChannel).name : 'Unknown';
             let logText = `티켓 채널: ${channelName}\n`;
             logText += `종료 시간: ${new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}\n`;
@@ -67,7 +67,7 @@ export async function closeTicket(interaction: ChatInputCommandInteraction | any
                 const timestamp = message.createdAt.toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' });
                 const content = message.content || '[임베드 또는 첨부 파일]';
                 logText += `[${timestamp}] ${message.author.tag}: ${content}\n`;
-                message.attachments.forEach(attachment => { logText += `  └ 첨부: ${attachment.url}\n`; });
+                message.attachments.forEach((attachment) => { logText += `  └ 첨부: ${attachment.url}\n`; });
             }
 
             const tmpDir = path.join(process.cwd(), 'tmp');
