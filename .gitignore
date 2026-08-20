@@ -4,3 +4,7 @@
 .DS_Store
 *.tar
 config.json
+# Runtime data
+/ticket_system.json
+/giveaways.json
+/tmp/
