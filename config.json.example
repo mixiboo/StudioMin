@@ -1,0 +1,30 @@
+{
+  "123456789012345678": {
+    "logChannel": "987654321098765432",
+    "toggles": {
+      "messageDelete": true,
+      "messageUpdate": true,
+      "messageDeleteBulk": false,
+      "memberJoin": true,
+      "memberLeave": true,
+      "memberUpdate": false,
+      "memberBan": true,
+      "memberUnban": true,
+      "channelCreate": false,
+      "channelDelete": false,
+      "channelUpdate": false,
+      "roleCreate": false,
+      "roleDelete": false,
+      "roleUpdate": false,
+      "voiceStateUpdate": true,
+      "inviteCreate": false,
+      "inviteDelete": false,
+      "emojiCreate": false,
+      "emojiDelete": false,
+      "emojiUpdate": false,
+      "stickerCreate": false,
+      "stickerDelete": false,
+      "stickerUpdate": false
+    }
+  }
+}
