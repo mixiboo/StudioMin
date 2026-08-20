@@ -60,7 +60,7 @@
 
 ```bash
 git clone <your-repo-url>
-cd template-logger
+cd StudioMin
 ```
 
 ### 2. 의존성 설치

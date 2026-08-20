@@ -3,6 +3,8 @@ import { config } from "./config";
 import { commands } from "./commands";
 import { deployCommands } from "./deploy-commands";
 import { startScheduledJobs } from "./scheduler";
+import { handleMessageReactionAdd } from "./events/messageReactionAdd";
+import { handleMessageReactionRemove } from "./events/messageReactionRemove";
 
 // Event handlers
 import { handleMessageCreate } from "./events/messageCreate";

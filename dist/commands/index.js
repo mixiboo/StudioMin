@@ -36,7 +36,25 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.commands = void 0;
 const ping = __importStar(require("./ping"));
 const logSettings = __importStar(require("./log-settings"));
+const welcomeSetup = __importStar(require("./welcome/welcome-setup"));
+const leaveSetup = __importStar(require("./welcome/leave-setup"));
+const reactionRoleAdd = __importStar(require("./roles/reaction-role-add"));
+const reactionRoleRemove = __importStar(require("./roles/reaction-role-remove"));
+const reactionRoleList = __importStar(require("./roles/reaction-role-list"));
+const reactionRolePanel = __importStar(require("./roles/reaction-role-panel"));
+const purge = __importStar(require("./moderation/purge"));
+const kick = __importStar(require("./moderation/kick"));
+const ban = __importStar(require("./moderation/ban"));
 exports.commands = {
     ping,
-    "로그-설정": logSettings
+    "로그-설정": logSettings,
+    "welcome-setup": welcomeSetup,
+    "leave-setup": leaveSetup,
+    "reaction-role-add": reactionRoleAdd,
+    "reaction-role-remove": reactionRoleRemove,
+    "reaction-role-list": reactionRoleList,
+    "reaction-role-panel": reactionRolePanel,
+    purge,
+    kick,
+    ban
 };

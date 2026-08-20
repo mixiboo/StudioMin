@@ -1,0 +1,59 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.data = void 0;
+exports.execute = execute;
+const discord_js_1 = require("discord.js");
+const database_1 = require("../../services/database");
+const localization_1 = require("../../services/localization");
+const embed_1 = require("../../utils/embed");
+exports.data = new discord_js_1.SlashCommandBuilder()
+    .setName("reaction-role-remove")
+    .setNameLocalizations({ ko: (0, localization_1.t)("commands.reaction-role-remove.name") })
+    .setDescription("Remove a reaction role from a message")
+    .setDescriptionLocalizations({ ko: (0, localization_1.t)("commands.reaction-role-remove.description") })
+    .setDefaultMemberPermissions(discord_js_1.PermissionFlagsBits.ManageRoles)
+    .addStringOption((option) => option
+    .setName("message_id")
+    .setNameLocalizations({ ko: "메시지id" })
+    .setDescription("The message ID to remove reaction role from")
+    .setDescriptionLocalizations({ ko: (0, localization_1.t)("commands.reaction-role-remove.options.message_id") })
+    .setRequired(true))
+    .addStringOption((option) => option
+    .setName("emoji")
+    .setNameLocalizations({ ko: "이모지" })
+    .setDescription("The emoji to remove")
+    .setDescriptionLocalizations({ ko: (0, localization_1.t)("commands.reaction-role-remove.options.emoji") })
+    .setRequired(true));
+async function execute(interaction) {
+    if (!interaction.guildId) {
+        return interaction.reply({
+            embeds: [(0, embed_1.errorEmbed)((0, localization_1.t)("errors.guild_only"))],
+            ephemeral: true,
+        });
+    }
+    const messageId = interaction.options.getString("message_id", true);
+    const emoji = interaction.options.getString("emoji", true);
+    const reactionRole = await database_1.db.reactionRole.findUnique({
+        where: {
+            messageId_emoji: {
+                messageId,
+                emoji,
+            },
+        },
+    });
+    if (!reactionRole) {
+        return interaction.reply({
+            embeds: [(0, embed_1.errorEmbed)((0, localization_1.t)("commands.reaction-role-remove.error_not_found"))],
+            ephemeral: true,
+        });
+    }
+    await database_1.db.reactionRole.delete({
+        where: {
+            id: reactionRole.id,
+        },
+    });
+    return interaction.reply({
+        embeds: [(0, embed_1.successEmbed)((0, localization_1.t)("commands.reaction-role-remove.success"))],
+        ephemeral: true,
+    });
+}
