@@ -5,6 +5,8 @@ const config_1 = require("./config");
 const commands_1 = require("./commands");
 const deploy_commands_1 = require("./deploy-commands");
 const scheduler_1 = require("./scheduler");
+const messageReactionAdd_1 = require("./events/messageReactionAdd");
+const messageReactionRemove_1 = require("./events/messageReactionRemove");
 const messageCreate_1 = require("./events/messageCreate");
 const messageDelete_1 = require("./events/messageDelete");
 const messageUpdate_1 = require("./events/messageUpdate");
@@ -110,6 +112,12 @@ client.on(discord_js_1.Events.GuildEmojiUpdate, emojiUpdate_1.handleEmojiUpdate)
 client.on(discord_js_1.Events.GuildStickerCreate, stickerCreate_1.handleStickerCreate);
 client.on(discord_js_1.Events.GuildStickerDelete, stickerDelete_1.handleStickerDelete);
 client.on(discord_js_1.Events.GuildStickerUpdate, stickerUpdate_1.handleStickerUpdate);
+client.on(discord_js_1.Events.MessageCreate, messageCreate_1.handleMessageCreate);
+client.on(discord_js_1.Events.MessageDelete, messageDelete_1.handleMessageDelete);
+client.on(discord_js_1.Events.MessageUpdate, messageUpdate_1.handleMessageUpdate);
+client.on(discord_js_1.Events.MessageBulkDelete, messageDeleteBulk_1.handleMessageDeleteBulk);
+client.on(discord_js_1.Events.MessageReactionAdd, messageReactionAdd_1.handleMessageReactionAdd);
+client.on(discord_js_1.Events.MessageReactionRemove, messageReactionRemove_1.handleMessageReactionRemove);
 client.login(config_1.config.DISCORD_TOKEN).then(() => {
     console.log("봇이 시작되었습니다.");
 });

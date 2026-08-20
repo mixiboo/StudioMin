@@ -130,6 +130,13 @@ client.on(Events.GuildEmojiUpdate, handleEmojiUpdate);
 client.on(Events.GuildStickerCreate, handleStickerCreate);
 client.on(Events.GuildStickerDelete, handleStickerDelete);
 client.on(Events.GuildStickerUpdate, handleStickerUpdate);
+client.on(Events.MessageCreate, handleMessageCreate);
+client.on(Events.MessageDelete, handleMessageDelete);
+client.on(Events.MessageUpdate, handleMessageUpdate);
+client.on(Events.MessageBulkDelete, handleMessageDeleteBulk);
+
+client.on(Events.MessageReactionAdd, handleMessageReactionAdd);
+client.on(Events.MessageReactionRemove, handleMessageReactionRemove);
 
 // 봇 로그인
 client.login(config.DISCORD_TOKEN).then(() => {
