@@ -3,27 +3,64 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.handleGuildMemberRemove = handleGuildMemberRemove;
 const discord_js_1 = require("discord.js");
 const configManager_1 = require("../utils/configManager");
+const database_1 = require("../services/database");
+const embed_1 = require("../utils/embed");
 async function handleGuildMemberRemove(member) {
+    const guildId = member.guild.id;
     try {
-        const guildId = member.guild.id;
         const config = (0, configManager_1.getGuildConfig)(guildId);
-        if (!config?.logChannel || !(0, configManager_1.isEventEnabled)(guildId, 'memberLeave'))
-            return;
-        const logChannel = member.guild.channels.cache.get(config.logChannel);
-        if (!logChannel)
-            return;
-        const embed = new discord_js_1.EmbedBuilder()
-            .setTitle('📤 멤버 퇴장')
-            .setColor(0xFF0000)
-            .setThumbnail(member.user.displayAvatarURL())
-            .addFields({ name: '유저', value: `${member.user.tag} (${member.user.id})`, inline: true }, { name: '총 멤버 수', value: member.guild.memberCount.toString(), inline: true })
-            .setTimestamp();
-        if (member.joinedAt) {
-            embed.addFields({ name: '가입 일자', value: `<t:${Math.floor(member.joinedTimestamp / 1000)}:R>`, inline: true });
+        if (config?.logChannel && (0, configManager_1.isEventEnabled)(guildId, 'memberLeave')) {
+            const logChannel = member.guild.channels.cache.get(config.logChannel);
+            if (logChannel) {
+                const embed = new discord_js_1.EmbedBuilder()
+                    .setTitle('📤 멤버 퇴장')
+                    .setColor(0xFF0000)
+                    .setThumbnail(member.user.displayAvatarURL())
+                    .addFields({
+                    name: '유저',
+                    value: `${member.user.tag} (${member.user.id})`,
+                    inline: true
+                }, {
+                    name: '총 멤버 수',
+                    value: member.guild.memberCount.toString(),
+                    inline: true
+                })
+                    .setTimestamp();
+                if (member.joinedTimestamp) {
+                    embed.addFields({
+                        name: '가입 일자',
+                        value: `<t:${Math.floor(member.joinedTimestamp / 1000)}:R>`,
+                        inline: true
+                    });
+                }
+                await logChannel.send({ embeds: [embed] });
+            }
         }
-        await logChannel.send({ embeds: [embed] });
     }
     catch (error) {
-        console.error('Error handling guildMemberRemove:', error);
+        console.error('Error handling member leave logger:', error);
+    }
+    try {
+        const guildConfig = await database_1.db.guild.findUnique({
+            where: { id: guildId },
+        });
+        if (!guildConfig?.leaveChannelId)
+            return;
+        const channel = member.guild.channels.cache.get(guildConfig.leaveChannelId);
+        if (!channel)
+            return;
+        const message = (guildConfig.leaveMessage || '{user} has left the server.')
+            .replace(/{user}/g, member.toString())
+            .replace(/{username}/g, member.user.username)
+            .replace(/{server}/g, member.guild.name)
+            .replace(/{memberCount}/g, member.guild.memberCount.toString());
+        const embed = (0, embed_1.createEmbed)('error')
+            .setTitle('👋 멤버 퇴장')
+            .setDescription(message)
+            .setThumbnail(member.user.displayAvatarURL());
+        await channel.send({ embeds: [embed] });
+    }
+    catch (error) {
+        console.error('Error handling leave system:', error);
     }
 }
