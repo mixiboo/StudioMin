@@ -1,7 +1,7 @@
 {
-  "name": "discord-audit-logger-bot",
+  "name": "studiomin",
   "version": "1.0.0",
-  "description": "Advanced Discord audit logging bot with modular event toggles - supports 23 different event types",
+  "description": "StudioMin 전용 Discord 감사 로그 봇",
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
