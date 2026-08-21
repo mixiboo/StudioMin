@@ -24,10 +24,12 @@ export const commands = {
     "reaction-role-remove": reactionRoleRemove,
     "reaction-role-list": reactionRoleList,
     "reaction-role-panel": reactionRolePanel,
-    purge, kick, ban,
+    purge,
+    kick,
+    ban,
     ticket,
     "ticket-setup": ticketSetup,
     giveaway,
-    "메시지": message,
-    "임베드": embed
+    message,
+    embed,
 };
