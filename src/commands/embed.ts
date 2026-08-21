@@ -1,4 +1,5 @@
 import {
+    ChannelType,
     ChatInputCommandInteraction,
     EmbedBuilder,
     PermissionFlagsBits,
@@ -36,7 +37,7 @@ export const data = new SlashCommandBuilder()
         option
             .setName('채널')
             .setDescription('임베드를 보낼 채널')
-            .addChannelTypes(0)
+            .addChannelTypes(ChannelType.GuildText)
             .setRequired(true),
     )
     .addStringOption(option =>
