@@ -27,21 +27,24 @@ export const data = new SlashCommandBuilder()
 
 export async function execute(interaction: ChatInputCommandInteraction) {
     if (!interaction.memberPermissions?.has(PermissionFlagsBits.Administrator)) {
-        return '관리자만 사용할 수 있는 명령어입니다.';
+        return interaction.reply({ content: '관리자만 사용할 수 있는 명령어입니다.', ephemeral: true });
     }
 
     const channel = interaction.options.getChannel('채널', true);
     const content = interaction.options.getString('내용', true);
 
     if (!(channel instanceof TextChannel)) {
-        return '텍스트 채널만 선택할 수 있습니다.';
+        return interaction.reply({ content: '텍스트 채널만 선택할 수 있습니다.', ephemeral: true });
     }
 
     try {
         await channel.send({ content });
-        return `✅ ${channel}에 메시지를 전송했습니다.`;
+        return interaction.reply({ content: `✅ ${channel}에 메시지를 전송했습니다.`, ephemeral: true });
     } catch (error) {
         console.error('[메시지] 전송 실패:', error);
-        return '❌ 메시지를 전송하지 못했습니다. 봇의 채널 권한을 확인해주세요.';
+        return interaction.reply({
+            content: '❌ 메시지를 전송하지 못했습니다. 봇의 채널 권한을 확인해주세요.',
+            ephemeral: true,
+        });
     }
 }
