@@ -1,4 +1,5 @@
 import {
+    ChannelType,
     ChatInputCommandInteraction,
     PermissionFlagsBits,
     SlashCommandBuilder,
@@ -13,7 +14,7 @@ export const data = new SlashCommandBuilder()
         option
             .setName('채널')
             .setDescription('메시지를 보낼 채널')
-            .addChannelTypes(0)
+            .addChannelTypes(ChannelType.GuildText)
             .setRequired(true),
     )
     .addStringOption(option =>
