@@ -7,19 +7,22 @@ import {
 } from 'discord.js';
 
 export const data = new SlashCommandBuilder()
-    .setName('메시지')
+    .setName('message')
+    .setNameLocalizations({ ko: '메시지' })
     .setDescription('관리자용 일반 메시지 전송')
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
     .addChannelOption(option =>
         option
-            .setName('채널')
+            .setName('channel')
+            .setNameLocalizations({ ko: '채널' })
             .setDescription('메시지를 보낼 채널')
             .addChannelTypes(ChannelType.GuildText)
             .setRequired(true),
     )
     .addStringOption(option =>
         option
-            .setName('내용')
+            .setName('content')
+            .setNameLocalizations({ ko: '내용' })
             .setDescription('전송할 메시지 내용')
             .setMaxLength(2000)
             .setRequired(true),
@@ -30,8 +33,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         return interaction.reply({ content: '관리자만 사용할 수 있는 명령어입니다.', ephemeral: true });
     }
 
-    const channel = interaction.options.getChannel('채널', true);
-    const content = interaction.options.getString('내용', true);
+    const channel = interaction.options.getChannel('channel', true);
+    const content = interaction.options.getString('content', true);
 
     if (!(channel instanceof TextChannel)) {
         return interaction.reply({ content: '텍스트 채널만 선택할 수 있습니다.', ephemeral: true });
