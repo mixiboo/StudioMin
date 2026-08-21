@@ -12,6 +12,8 @@ import * as ban from "./moderation/ban";
 import * as ticket from "./ticket";
 import * as ticketSetup from "./ticket-setup";
 import * as giveaway from "./giveaway";
+import * as message from "./message";
+import * as embed from "./embed";
 
 export const commands = {
     ping,
@@ -25,5 +27,7 @@ export const commands = {
     purge, kick, ban,
     ticket,
     "ticket-setup": ticketSetup,
-    giveaway
+    giveaway,
+    "메시지": message,
+    "임베드": embed
 };
