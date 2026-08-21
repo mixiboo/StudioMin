@@ -83,7 +83,7 @@ export const data = new SlashCommandBuilder()
 
 export async function execute(interaction: ChatInputCommandInteraction) {
     if (!interaction.memberPermissions?.has(PermissionFlagsBits.Administrator)) {
-        return '관리자만 사용할 수 있는 명령어입니다.';
+        return interaction.reply({ content: '관리자만 사용할 수 있는 명령어입니다.', ephemeral: true });
     }
 
     const channel = interaction.options.getChannel('채널', true);
@@ -95,18 +95,24 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     const footer = interaction.options.getString('푸터');
 
     if (!(channel instanceof TextChannel)) {
-        return '텍스트 채널만 선택할 수 있습니다.';
+        return interaction.reply({ content: '텍스트 채널만 선택할 수 있습니다.', ephemeral: true });
     }
 
     if (!isValidUrl(thumbnail) || !isValidUrl(image)) {
-        return '❌ 썸네일/이미지는 http 또는 https URL만 사용할 수 있습니다.';
+        return interaction.reply({
+            content: '❌ 썸네일/이미지는 http 또는 https URL만 사용할 수 있습니다.',
+            ephemeral: true,
+        });
     }
 
     let parsedColor: number;
     try {
         parsedColor = parseColor(color);
     } catch {
-        return '❌ 색상은 `#5865F2` 같은 6자리 HEX 형식으로 입력해주세요.';
+        return interaction.reply({
+            content: '❌ 색상은 `#5865F2` 같은 6자리 HEX 형식으로 입력해주세요.',
+            ephemeral: true,
+        });
     }
 
     const embed = new EmbedBuilder()
@@ -120,9 +126,12 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
     try {
         await channel.send({ embeds: [embed] });
-        return `✅ ${channel}에 임베드를 전송했습니다.`;
+        return interaction.reply({ content: `✅ ${channel}에 임베드를 전송했습니다.`, ephemeral: true });
     } catch (error) {
         console.error('[임베드] 전송 실패:', error);
-        return '❌ 임베드를 전송하지 못했습니다. 봇의 채널 권한과 이미지 URL을 확인해주세요.';
+        return interaction.reply({
+            content: '❌ 임베드를 전송하지 못했습니다. 봇의 채널 권한과 이미지 URL을 확인해주세요.',
+            ephemeral: true,
+        });
     }
 }
