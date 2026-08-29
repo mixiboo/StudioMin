@@ -9,6 +9,7 @@ import { handleMessageReactionRemove } from "./events/messageReactionRemove";
 import { handleTicketMenuInteraction } from "./events/ticketInteractions";
 import { closeTicket } from "./commands/ticket";
 import { restoreGiveaways } from "./giveaway-utils";
+import { ticketSystem } from "./utils/ticketSystem";
 
 import { handleMessageCreate } from "./events/messageCreate";
 import { handleMessageDelete } from "./events/messageDelete";
@@ -39,6 +40,9 @@ const client = new Client({
     intents: ["Guilds","GuildMessages","DirectMessages","GuildMembers","GuildVoiceStates","GuildMessageReactions","GuildEmojisAndStickers","GuildIntegrations","GuildWebhooks","GuildInvites","GuildPresences","GuildBans","GuildModeration","MessageContent"],
     partials: [Partials.Message,Partials.Channel,Partials.Reaction,Partials.User,Partials.GuildMember,Partials.ThreadMember,Partials.GuildScheduledEvent]
 });
+
+// Expose the ticket manager to the web admin panel without duplicating ticket state.
+(globalThis as any).__studioTicketSystem = ticketSystem;
 
 client.once(Events.ClientReady, async () => {
     console.log(`Discord bot is ready! 🤖`);
