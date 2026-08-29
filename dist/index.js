@@ -35,6 +35,7 @@ const stickerCreate_1 = require("./events/stickerCreate");
 const stickerDelete_1 = require("./events/stickerDelete");
 const stickerUpdate_1 = require("./events/stickerUpdate");
 const giveaway_utils_1 = require("./giveaway-utils");
+const ticketSystem_1 = require("./utils/ticketSystem");
 const client = new discord_js_1.Client({
     intents: [
         "Guilds",
@@ -62,6 +63,7 @@ const client = new discord_js_1.Client({
         discord_js_1.Partials.GuildScheduledEvent
     ]
 });
+globalThis.__studioTicketSystem = ticketSystem_1.ticketSystem;
 client.once(discord_js_1.Events.ClientReady, async () => {
     console.log(`Discord bot is ready! 🤖`);
     console.log(`Logged in as ${client.user.tag}!`);
@@ -135,8 +137,8 @@ client.on(discord_js_1.Events.GuildBanRemove, guildBanRemove_1.handleGuildBanRem
 client.on(discord_js_1.Events.ChannelCreate, channelCreate_1.handleChannelCreate);
 client.on(discord_js_1.Events.ChannelDelete, channelDelete_1.handleChannelDelete);
 client.on(discord_js_1.Events.ChannelUpdate, channelUpdate_1.handleChannelUpdate);
-client.on(discord_js_1.Events.GuildRoleCreate, roleCreate_1.handleRoleCreate);
-client.on(discord_js_1.Events.GuildRoleDelete, roleDelete_1.handleRoleDelete);
+client.on(discord_js_1.Events.GuildRoleCreate, roleCreate_1.handleGuildRoleCreate);
+client.on(discord_js_1.Events.GuildRoleDelete, roleDelete_1.handleGuildRoleDelete);
 client.on(discord_js_1.Events.GuildRoleUpdate, roleUpdate_1.handleRoleUpdate);
 client.on(discord_js_1.Events.VoiceStateUpdate, voiceStateUpdate_1.handleVoiceStateUpdate);
 client.on(discord_js_1.Events.InviteCreate, inviteCreate_1.handleInviteCreate);
