@@ -18,6 +18,7 @@ export class TicketSystemManager {
     public addTicket(guildId: string, ticket: ActiveTicket) { this.ensureGuildData(guildId); this.data[guildId].activeTickets.push(ticket); this.saveData(); }
     public hasActiveTicket(guildId: string, userId: string) { return this.data[guildId]?.activeTickets.some(t => t.userId === userId && t.active) ?? false; }
     public getTicketByChannel(guildId: string, channelId: string) { return this.data[guildId]?.activeTickets.find(t => t.channelId === channelId); }
+    public getActiveTickets(guildId: string) { return this.data[guildId]?.activeTickets.filter(t => t.active) ?? []; }
     public closeTicket(guildId: string, channelId: string) { const g = this.data[guildId]; if (!g) return; const t = g.activeTickets.find(t => t.channelId === channelId); if (t) { t.active = false; this.saveData(); } }
 }
 export const ticketSystem = new TicketSystemManager();
