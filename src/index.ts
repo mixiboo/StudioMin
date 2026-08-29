@@ -3,6 +3,7 @@ import { config } from "./config";
 import { commands } from "./commands";
 import { deployCommands } from "./deploy-commands";
 import { startScheduledJobs } from "./scheduler";
+import { startWebPanel } from "./webPanel";
 import { handleMessageReactionAdd } from "./events/messageReactionAdd";
 import { handleMessageReactionRemove } from "./events/messageReactionRemove";
 import { handleTicketMenuInteraction } from "./events/ticketInteractions";
@@ -54,6 +55,7 @@ client.once(Events.ClientReady, async () => {
 
     startScheduledJobs(client);
     restoreGiveaways(client);
+    startWebPanel(client);
     console.log("스케줄러가 시작되었습니다.");
 });
 
