@@ -1,39 +1,41 @@
 import { createServer, IncomingMessage, ServerResponse } from "node:http";
 import { randomBytes, timingSafeEqual } from "node:crypto";
 import { URL } from "node:url";
-import type { Client, TextChannel } from "discord.js";
-import { PermissionFlagsBits } from "discord.js";
+import type { Client } from "discord.js";
+import { ChannelType, PermissionFlagsBits } from "discord.js";
 
 const sessions = new Set<string>();
 
-const html = `<!doctype html>
-<html lang="ko">
-<head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>민쭌봇 관리자</title>
+// Keep the panel self-contained to avoid extra runtime dependencies.
+const html = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>민쭌봇 관리자</title>
 <style>
 :root{color-scheme:dark;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#0b0d12;color:#f4f7fb}
-*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 20% 0%,#1c2640 0,#0b0d12 42%);min-height:100vh}
-.wrap{max-width:1050px;margin:0 auto;padding:28px 18px 50px}.top{display:flex;justify-content:space-between;gap:18px;align-items:center;margin-bottom:22px}.brand h1{margin:0;font-size:26px}.brand p{margin:6px 0 0;color:#8d98aa}
-.card{background:rgba(18,22,31,.86);border:1px solid #273042;border-radius:18px;padding:20px;box-shadow:0 14px 40px rgba(0,0,0,.2);backdrop-filter:blur(10px)}
-.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.full{grid-column:1/-1}label{display:block;font-size:13px;color:#9aa6b8;margin:0 0 7px}input,textarea,select{width:100%;border:1px solid #2d3749;background:#0f141d;color:#fff;border-radius:11px;padding:12px 13px;outline:none}textarea{resize:vertical;min-height:120px}input:focus,textarea:focus,select:focus{border-color:#667eea}
-button{border:0;border-radius:11px;padding:11px 15px;background:#5865f2;color:#fff;font-weight:700;cursor:pointer}button.secondary{background:#252d3b}.row{display:flex;gap:10px;align-items:center}.actions{display:flex;justify-content:flex-end;gap:10px;margin-top:14px}.msg{margin-top:12px;padding:11px 12px;border-radius:10px;display:none}.ok{display:block;background:#123321;color:#91f2b3}.err{display:block;background:#35171b;color:#ffadb7}
-.login{max-width:430px;margin:11vh auto}.muted{color:#8994a7;font-size:13px}.hint{font-size:12px;color:#778297;margin-top:7px}.hidden{display:none}.badge{font-size:12px;color:#aeb8ca;background:#192131;padding:7px 9px;border-radius:999px}
-@media(max-width:760px){.grid{grid-template-columns:1fr}.full{grid-column:auto}.top{align-items:flex-start;flex-direction:column}}
-</style></head>
-<body><div id="app" class="wrap"></div>
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 18% 0%,#202a47 0,#0b0d12 48%);min-height:100vh}
+.layout{display:flex;min-height:100vh}.side{width:245px;background:#11151e;border-right:1px solid #242c3a;padding:18px 12px;position:sticky;top:0;height:100vh}.logo{display:flex;gap:10px;align-items:center;padding:8px 10px 20px}.logoIcon{width:38px;height:38px;border-radius:12px;background:#5865f2;display:grid;place-items:center;font-size:20px}.logo strong{font-size:15px}.logo span{display:block;color:#7f8aa0;font-size:11px;margin-top:2px}.nav{display:grid;gap:6px}.nav button{width:100%;text-align:left;background:transparent;color:#99a4b8;border:0;padding:11px 12px;border-radius:10px;font-weight:650}.nav button.active,.nav button:hover{background:#1f2635;color:#fff}.server{margin:18px 8px 0;padding:13px;border:1px solid #273042;border-radius:12px;background:#171c27}.server .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#36d399;margin-right:7px}.server small{color:#8290a5}.main{flex:1;min-width:0}.top{height:68px;border-bottom:1px solid #242c3a;display:flex;align-items:center;justify-content:space-between;padding:0 26px;background:rgba(11,13,18,.72);backdrop-filter:blur(14px)}.top h1{font-size:18px;margin:0}.top p{font-size:12px;color:#7f8aa0;margin:3px 0 0}.content{padding:25px;max-width:1250px}.page{display:none}.page.show{display:block}.grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:16px}.card{grid-column:span 12;background:rgba(18,22,31,.9);border:1px solid #273042;border-radius:15px;padding:18px;box-shadow:0 14px 35px rgba(0,0,0,.18)}.half{grid-column:span 6}.third{grid-column:span 4}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.stat{background:#151b26;border:1px solid #252e3d;border-radius:13px;padding:16px}.stat b{display:block;font-size:25px;margin-top:7px}.muted{color:#8793a7;font-size:12px}.title{margin:0 0 5px;font-size:20px}.sub{margin:0 0 18px;color:#8894a8;font-size:13px}.row{display:flex;gap:10px;align-items:center}.actions{display:flex;justify-content:flex-end;gap:9px;margin-top:13px}label{display:block;font-size:12px;color:#9ba6b7;margin:0 0 7px}input,textarea,select{width:100%;border:1px solid #303a4b;background:#0f141d;color:#fff;border-radius:10px;padding:11px 12px;outline:none}textarea{resize:vertical;min-height:105px}input:focus,textarea:focus,select:focus{border-color:#667eea}button.primary,button.danger,button.secondary{border:0;border-radius:10px;padding:10px 14px;color:#fff;font-weight:700;cursor:pointer}.primary{background:#5865f2}.secondary{background:#2a3241}.danger{background:#d34d5a}.tableWrap{overflow:auto}.table{width:100%;border-collapse:collapse}.table th,.table td{text-align:left;padding:11px 9px;border-bottom:1px solid #252e3d;font-size:12px}.table th{color:#8290a5;font-weight:650}.user{display:flex;align-items:center;gap:9px}.avatar{width:32px;height:32px;border-radius:50%;background:#2b3446;display:grid;place-items:center;font-size:13px}.badge{display:inline-flex;padding:5px 8px;border-radius:999px;background:#182238;color:#a9b9ff;font-size:11px}.login{width:min(420px,calc(100% - 30px));margin:12vh auto}.msg{margin-top:10px;padding:10px;border-radius:9px;display:none;font-size:12px}.ok{display:block;background:#143322;color:#8ff0ad}.err{display:block;background:#37171d;color:#ffb1ba}.modal{position:fixed;inset:0;background:rgba(0,0,0,.62);display:none;place-items:center;padding:20px}.modal.show{display:grid}.modalCard{width:min(500px,100%);background:#151a24;border:1px solid #2a3445;border-radius:16px;padding:20px}.ticket{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 0;border-bottom:1px solid #252e3d}.ticket:last-child{border-bottom:0}.mobileBtn{display:none;background:transparent;border:0;color:#fff;font-size:20px}@media(max-width:900px){.side{position:fixed;left:-260px;z-index:10;transition:.2s}.side.open{left:0}.mobileBtn{display:block}.half,.third{grid-column:span 12}.stats{grid-template-columns:repeat(2,1fr)}}@media(max-width:560px){.content{padding:16px}.top{padding:0 16px}.stats{grid-template-columns:1fr}.card{padding:15px}}
+</style></head><body><div id="root"></div>
 <script>
-const app=document.getElementById('app');
-function esc(s){return String(s).replace(/[&<>\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
-async function api(path,options={}){const r=await fetch(path,{headers:{'Content-Type':'application/json',...(options.headers||{})},...options});let d={};try{d=await r.json()}catch{};if(!r.ok)throw new Error(d.error||'요청에 실패했습니다.');return d}
-function login(){app.innerHTML='<div class="login"><div class="card"><div class="brand"><h1>🔒 민쭌봇 관리자</h1><p>관리자 전용 패널</p></div><div style="margin-top:18px"><label>관리자 비밀번호</label><input id="pw" type="password" placeholder="비밀번호 입력"><div class="actions"><button onclick="doLogin()">로그인</button></div><div id="msg" class="msg"></div><p class="hint">이 패널은 관리자 비밀번호가 설정된 경우에만 사용할 수 있습니다.</p></div></div></div>';document.getElementById('pw').focus()}
-async function doLogin(){const msg=document.getElementById('msg');try{await api('/api/login',{method:'POST',body:JSON.stringify({password:document.getElementById('pw').value})});load()}catch(e){msg.className='msg err';msg.textContent=e.message}}
-async function load(){try{const s=await api('/api/state');render(s)}catch{login()}}
-function render(s){const guilds=s.guilds||[];let g=guilds[0]?.id||'';app.innerHTML='<div class="top"><div class="brand"><h1>민쭌봇 관리자 패널</h1><p>메시지와 임베드를 빠르게 전송하세요.</p></div><div class="row"><span class="badge">관리자 전용</span><button class="secondary" onclick="logout()">로그아웃</button></div></div><div class="grid"><div class="card"><label>서버</label><select id="guild" onchange="refreshChannels()">'+guilds.map(x=>'<option value="'+x.id+'">'+esc(x.name)+'</option>').join('')+'</select></div><div class="card"><label>채널</label><select id="channel"></select></div><div class="card"><h2 style="margin-top:0">📢 메시지 보내기</h2><label>내용</label><textarea id="message" maxlength="2000" placeholder="보낼 메시지를 입력하세요."></textarea><div class="actions"><button onclick="sendMessage()">전송하기</button></div><div id="mmsg" class="msg"></div></div><div class="card"><h2 style="margin-top:0">🖼️ 임베드 보내기</h2><label>제목</label><input id="title" maxlength="256"><label style="margin-top:12px">내용</label><textarea id="content" maxlength="4096"></textarea><div class="row" style="margin-top:12px"><div style="flex:1"><label>색상</label><input id="color" value="#5865F2" maxlength="7"></div><div style="flex:1"><label>푸터</label><input id="footer" maxlength="2048"></div></div><label style="margin-top:12px">썸네일 URL</label><input id="thumbnail" placeholder="https://..."><label style="margin-top:12px">본문 이미지 URL</label><input id="image" placeholder="https://..."><div class="actions"><button onclick="sendEmbed()">임베드 전송</button></div><div id="emsg" class="msg"></div></div></div>';window.state=s;refreshChannels()}
-function refreshChannels(){const gid=document.getElementById('guild').value;const guild=window.state.guilds.find(x=>x.id===gid);document.getElementById('channel').innerHTML=(guild?.channels||[]).map(c=>'<option value="'+c.id+'"># '+esc(c.name)+'</option>').join('')}
+const root=document.getElementById('root');let state=null;
+const api=async(path,opt={})=>{const r=await fetch(path,{headers:{'Content-Type':'application/json',...(opt.headers||{})},...opt});let d={};try{d=await r.json()}catch{}if(!r.ok)throw new Error(d.error||'요청에 실패했습니다.');return d};
+const esc=s=>String(s).replace(/[&<>\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[c]));
+function login(){root.innerHTML='<div class="login"><div class="card"><div class="logo"><div class="logoIcon">🤖</div><div><strong>민쭌봇 관리자</strong><span>관리자 전용 패널</span></div></div><label>관리자 비밀번호</label><input id="pw" type="password" placeholder="비밀번호"><div class="actions"><button class="primary" onclick="doLogin()">로그인</button></div><div id="msg" class="msg"></div></div></div>';document.getElementById('pw').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin()});document.getElementById('pw').focus()}
+async function doLogin(){const msg=document.getElementById('msg');try{await api('/api/login',{method:'POST',body:JSON.stringify({password:document.getElementById('pw').value})});await load()}catch(e){msg.className='msg err';msg.textContent=e.message}}
+async function load(){try{state=await api('/api/state');render()}catch{login()}}
+function shell(){return '<div class="layout"><aside class="side" id="side"><div class="logo"><div class="logoIcon">🤖</div><div><strong>민쭌봇</strong><span>관리자 패널</span></div></div><div class="nav"><button class="active" data-page="home">⌂　대시보드</button><button data-page="message">📣　메시지</button><button data-page="embed">🖼　임베드</button><button data-page="users">👥　사용자 관리</button><button data-page="tickets">🎫　티켓 관리</button></div><div class="server"><div><span class="dot"></span><b>봇 온라인</b></div><small id="sideInfo">불러오는 중...</small></div></aside><main class="main"><header class="top"><div class="row"><button class="mobileBtn" onclick="toggleSide()">☰</button><div><h1 id="topTitle">대시보드</h1><p>Discord 서버를 한 곳에서 관리하세요.</p></div></div><div class="row"><span class="badge">🔒 관리자</span><button class="secondary" onclick="logout()">로그아웃</button></div></header><div class="content">${pages()}</div></main></div>'}
+function pages(){return '<section id="home" class="page show"><div class="grid"><div class="card"><h2 class="title">서버 상태</h2><p class="sub">현재 봇 연결 상태와 주요 통계를 확인합니다.</p><div class="stats" id="stats"></div></div><div class="card"><h2 class="title">빠른 작업</h2><p class="sub">자주 사용하는 관리 기능입니다.</p><div class="row"><button class="primary" onclick="go(\'message\')">📣 메시지 보내기</button><button class="secondary" onclick="go(\'embed\')">🖼 임베드 만들기</button></div></div></div></section><section id="message" class="page"><div class="grid"><div class="card half"><h2 class="title">메시지 보내기</h2><p class="sub">원하는 채널에 일반 메시지를 전송합니다.</p><label>서버</label><select id="msgGuild"></select><label style="margin-top:12px">채널</label><select id="msgChannel"></select><label style="margin-top:12px">내용</label><textarea id="msgContent" maxlength="2000" placeholder="메시지를 입력하세요."></textarea><div class="actions"><button class="primary" onclick="sendMessage()">전송하기</button></div><div id="msgResult" class="msg"></div></div></div></section><section id="embed" class="page"><div class="grid"><div class="card half"><h2 class="title">임베드 보내기</h2><p class="sub">Discord 스타일의 임베드를 작성합니다.</p><label>서버</label><select id="embGuild"></select><label style="margin-top:12px">채널</label><select id="embChannel"></select><label style="margin-top:12px">제목</label><input id="embTitle" maxlength="256" placeholder="제목"><label style="margin-top:12px">내용</label><textarea id="embContent" maxlength="4096" placeholder="내용"></textarea><div class="row" style="margin-top:12px"><div style="flex:1"><label>색상</label><input id="embColor" value="#5865F2" maxlength="7"></div><div style="flex:1"><label>푸터</label><input id="embFooter" maxlength="2048"></div></div><label style="margin-top:12px">썸네일 URL</label><input id="embThumb" placeholder="https://..."><label style="margin-top:12px">이미지 URL</label><input id="embImage" placeholder="https://..."><div class="actions"><button class="primary" onclick="sendEmbed()">임베드 전송</button></div><div id="embResult" class="msg"></div></div></div></section><section id="users" class="page"><div class="grid"><div class="card"><h2 class="title">사용자 관리</h2><p class="sub">서버 멤버를 검색하고 관리합니다.</p><div class="row"><select id="userGuild" style="flex:1"></select><input id="userSearch" placeholder="닉네임 또는 사용자 ID" style="flex:2"><button class="primary" onclick="searchUsers()">검색</button></div><div class="tableWrap" style="margin-top:15px"><table class="table"><thead><tr><th>사용자</th><th>가입일</th><th>관리</th></tr></thead><tbody id="userRows"><tr><td colspan="3" class="muted">검색해 주세요.</td></tr></tbody></table></div></div></div></section><section id="tickets" class="page"><div class="grid"><div class="card"><h2 class="title">티켓 관리</h2><p class="sub">현재 열려 있는 티켓을 확인하고 종료합니다.</p><div id="ticketList" class="muted">불러오는 중...</div></div></div></section>'}
+function render(){root.innerHTML=shell();const guilds=state.guilds||[];document.getElementById('sideInfo').textContent=guilds.length+'개 서버 연결됨';for(const b of document.querySelectorAll('.nav button'))b.onclick=()=>go(b.dataset.page);fillGuilds('msgGuild','msgChannel');fillGuilds('embGuild','embChannel');fillGuilds('userGuild');updateStats();loadTickets()}
+function fillGuilds(gid,cid){const g=document.getElementById(gid);if(!g)return;g.innerHTML=(state.guilds||[]).map(x=>'<option value="'+x.id+'">'+esc(x.name)+'</option>').join('');g.onchange=cid?()=>fillChannels(gid,cid):null;if(cid)fillChannels(gid,cid)}
+function fillChannels(gid,cid){const gv=document.getElementById(gid).value;const s=(state.guilds||[]).find(x=>x.id===gv);document.getElementById(cid).innerHTML=(s?.channels||[]).map(c=>'<option value="'+c.id+'"># '+esc(c.name)+'</option>').join('')}
+function updateStats(){const g=state.guilds||[];const members=g.reduce((n,x)=>n+(x.memberCount||0),0);const channels=g.reduce((n,x)=>n+(x.channels||[]).length,0);document.getElementById('stats').innerHTML='<div class="stat"><span class="muted">상태</span><b style="color:#55df9a">온라인</b></div><div class="stat"><span class="muted">서버</span><b>'+g.length+'</b></div><div class="stat"><span class="muted">멤버</span><b>'+members+'</b></div><div class="stat"><span class="muted">채널</span><b>'+channels+'</b></div>'}
+async function sendMessage(){try{await api('/api/message',{method:'POST',body:JSON.stringify({channelId:document.getElementById('msgChannel').value,content:document.getElementById('msgContent').value})});show('msgResult',1,'✅ 메시지를 전송했습니다.');document.getElementById('msgContent').value=''}catch(e){show('msgResult',0,e.message)}}
+async function sendEmbed(){try{await api('/api/embed',{method:'POST',body:JSON.stringify({channelId:document.getElementById('embChannel').value,title:document.getElementById('embTitle').value,content:document.getElementById('embContent').value,color:document.getElementById('embColor').value,footer:document.getElementById('embFooter').value,thumbnail:document.getElementById('embThumb').value,image:document.getElementById('embImage').value})});show('embResult',1,'✅ 임베드를 전송했습니다.')}catch(e){show('embResult',0,e.message)}}
+async function searchUsers(){const gid=document.getElementById('userGuild').value;const q=document.getElementById('userSearch').value.trim();try{const d=await api('/api/users?guildId='+encodeURIComponent(gid)+'&q='+encodeURIComponent(q));document.getElementById('userRows').innerHTML=(d.users||[]).map(u=>'<tr><td><div class="user"><div class="avatar">👤</div><div><b>'+esc(u.displayName)+'</b><div class="muted">'+esc(u.username)+' · '+esc(u.id)+'</div></div></div></td><td>'+esc(u.joinedAt||'-')+'</td><td><button class="danger" onclick="kickUser(\''+u.id+'\')">추방</button> <button class="secondary" onclick="banUser(\''+u.id+'\')">차단</button></td></tr>').join('')||'<tr><td colspan="3" class="muted">검색 결과가 없습니다.</td></tr>'}catch(e){alert(e.message)}}
+async function kickUser(id){if(!confirm('이 사용자를 추방할까요?'))return;const gid=document.getElementById('userGuild').value;try{await api('/api/kick',{method:'POST',body:JSON.stringify({guildId:gid,userId:id})});searchUsers()}catch(e){alert(e.message)}}
+async function banUser(id){if(!confirm('이 사용자를 차단할까요?'))return;const gid=document.getElementById('userGuild').value;try{await api('/api/ban',{method:'POST',body:JSON.stringify({guildId:gid,userId:id})});searchUsers()}catch(e){alert(e.message)}}
+async function loadTickets(){try{const d=await api('/api/tickets');const el=document.getElementById('ticketList');el.innerHTML=(d.tickets||[]).map(t=>'<div class="ticket"><div><b># '+esc(t.channelName)+'</b><div class="muted">'+esc(t.username||t.userId)+' · '+esc(t.category||'문의')+'</div></div><button class="danger" onclick="closeTicket(\''+t.guildId+'\',\''+t.channelId+'\')">종료</button></div>').join('')||'<div class="muted">현재 열려 있는 티켓이 없습니다.</div>'}catch(e){document.getElementById('ticketList').textContent='티켓 정보를 불러오지 못했습니다.'}}
+async function closeTicket(guildId,channelId){if(!confirm('이 티켓을 종료할까요?'))return;try{await api('/api/ticket-close',{method:'POST',body:JSON.stringify({guildId,channelId})});loadTickets()}catch(e){alert(e.message)}}
 function show(id,ok,text){const e=document.getElementById(id);e.className='msg '+(ok?'ok':'err');e.textContent=text}
-async function sendMessage(){try{await api('/api/message',{method:'POST',body:JSON.stringify({channelId:document.getElementById('channel').value,content:document.getElementById('message').value})});show('mmsg',true,'✅ 메시지를 전송했습니다.');document.getElementById('message').value=''}catch(e){show('mmsg',false,e.message)}}
-async function sendEmbed(){try{await api('/api/embed',{method:'POST',body:JSON.stringify({channelId:document.getElementById('channel').value,title:document.getElementById('title').value,content:document.getElementById('content').value,color:document.getElementById('color').value,thumbnail:document.getElementById('thumbnail').value,image:document.getElementById('image').value,footer:document.getElementById('footer').value})});show('emsg',true,'✅ 임베드를 전송했습니다.')}catch(e){show('emsg',false,e.message)}}
+function go(page){document.querySelectorAll('.page').forEach(x=>x.classList.remove('show'));document.getElementById(page)?.classList.add('show');document.querySelectorAll('.nav button').forEach(x=>x.classList.toggle('active',x.dataset.page===page));const names={home:'대시보드',message:'메시지 보내기',embed:'임베드',users:'사용자 관리',tickets:'티켓 관리'};document.getElementById('topTitle').textContent=names[page]||'관리자';document.getElementById('side').classList.remove('open');if(page==='users')searchUsers();if(page==='tickets')loadTickets()}
+function toggleSide(){document.getElementById('side').classList.toggle('open')}
 async function logout(){await api('/api/logout',{method:'POST'}).catch(()=>{});login()}
 login();load();
 </script></body></html>`;
@@ -43,113 +45,48 @@ function json(res: ServerResponse, status: number, body: unknown) {
     res.end(JSON.stringify(body));
 }
 
-function isAuthed(req: IncomingMessage) {
+function getToken(req: IncomingMessage) {
     const cookie = req.headers.cookie ?? "";
-    const token = cookie.split(";").map(v => v.trim()).find(v => v.startsWith("studio_session="))?.slice("studio_session=".length);
-    return !!token && sessions.has(token);
+    return cookie.split(";").map(v => v.trim()).find(v => v.startsWith("studio_session="))?.slice("studio_session=".length);
 }
+function isAuthed(req: IncomingMessage) { const token = getToken(req); return !!token && sessions.has(token); }
 
 async function readBody(req: IncomingMessage): Promise<any> {
     return new Promise((resolve, reject) => {
         let data = "";
-        req.on("data", chunk => {
-            data += chunk;
-            if (data.length > 120_000) {
-                reject(new Error("요청이 너무 큽니다."));
-                req.destroy();
-            }
-        });
-        req.on("end", () => {
-            try { resolve(data ? JSON.parse(data) : {}); } catch { reject(new Error("잘못된 JSON 요청입니다.")); }
-        });
+        req.on("data", chunk => { data += chunk; if (data.length > 120_000) { reject(new Error("요청이 너무 큽니다.")); req.destroy(); } });
+        req.on("end", () => { try { resolve(data ? JSON.parse(data) : {}); } catch { reject(new Error("잘못된 JSON 요청입니다.")); } });
         req.on("error", reject);
     });
 }
-
-function sameSecret(input: string, expected: string) {
-    const a = Buffer.from(input);
-    const b = Buffer.from(expected);
-    return a.length === b.length && timingSafeEqual(a, b);
-}
-
+function sameSecret(input: string, expected: string) { const a = Buffer.from(input); const b = Buffer.from(expected); return a.length === b.length && timingSafeEqual(a,b); }
 function getGuildState(client: Client) {
     return client.guilds.cache.map(guild => ({
-        id: guild.id,
-        name: guild.name,
-        channels: guild.channels.cache
-            .filter(channel => channel.isTextBased() && "send" in channel)
-            .map(channel => ({ id: channel.id, name: channel.name ?? "채널" }))
-            .sort((a, b) => a.name.localeCompare(b.name, "ko"))
+        id:guild.id,name:guild.name,memberCount:guild.memberCount,
+        channels:guild.channels.cache.filter(c => c.type===ChannelType.GuildText || c.type===ChannelType.GuildAnnouncement).map(c=>({id:c.id,name:c.name??"채널"}))
     }));
 }
 
 export function startWebPanel(client: Client) {
     const password = process.env.ADMIN_PASSWORD;
-    if (!password) {
-        console.warn("⚠️ ADMIN_PASSWORD가 없어 웹 관리자 패널을 시작하지 않습니다.");
-        return;
-    }
-
-    const port = Number.parseInt(process.env.WEB_PORT || process.env.PORT || "3000", 10) || 3000;
-    const server = createServer(async (req, res) => {
-        try {
-            const url = new URL(req.url || "/", `http://${req.headers.host || "localhost"}`);
-            if (req.method === "GET" && url.pathname === "/admin") {
-                res.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff", "X-Frame-Options": "DENY" });
-                res.end(html);
-                return;
-            }
-            if (req.method === "POST" && url.pathname === "/api/login") {
-                const body = await readBody(req);
-                if (typeof body.password !== "string" || !sameSecret(body.password, password)) { json(res, 401, { error: "비밀번호가 올바르지 않습니다." }); return; }
-                const token = randomBytes(32).toString("hex");
-                sessions.add(token);
-                res.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Set-Cookie": `studio_session=${token}; HttpOnly; SameSite=Strict; Path=/; Max-Age=86400`, "Cache-Control": "no-store" });
-                res.end(JSON.stringify({ ok: true }));
-                return;
-            }
-            if (req.method === "POST" && url.pathname === "/api/logout") {
-                const cookie = req.headers.cookie ?? "";
-                const token = cookie.split(";").map(v => v.trim()).find(v => v.startsWith("studio_session="))?.slice("studio_session=".length);
-                if (token) sessions.delete(token);
-                res.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Set-Cookie": "studio_session=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0", "Cache-Control": "no-store" });
-                res.end(JSON.stringify({ ok: true }));
-                return;
-            }
-            if (!isAuthed(req)) { json(res, 401, { error: "로그인이 필요합니다." }); return; }
-            if (req.method === "GET" && url.pathname === "/api/state") { json(res, 200, { guilds: getGuildState(client) }); return; }
-            if (req.method === "POST" && url.pathname === "/api/message") {
-                const body = await readBody(req);
-                if (typeof body.content !== "string" || body.content.trim().length === 0 || body.content.length > 2000) { json(res, 400, { error: "메시지는 1~2000자로 입력해주세요." }); return; }
-                const channel = client.channels.cache.get(String(body.channelId));
-                if (!channel || !channel.isTextBased() || !("send" in channel)) { json(res, 400, { error: "유효한 텍스트 채널이 아닙니다." }); return; }
-                await channel.send({ content: body.content });
-                json(res, 200, { ok: true });
-                return;
-            }
-            if (req.method === "POST" && url.pathname === "/api/embed") {
-                const body = await readBody(req);
-                if (typeof body.title !== "string" || body.title.trim().length === 0 || body.title.length > 256) { json(res, 400, { error: "제목은 1~256자로 입력해주세요." }); return; }
-                if (typeof body.content !== "string" || body.content.trim().length === 0 || body.content.length > 4096) { json(res, 400, { error: "내용은 1~4096자로 입력해주세요." }); return; }
-                const channel = client.channels.cache.get(String(body.channelId));
-                if (!channel || !channel.isTextBased() || !("send" in channel)) { json(res, 400, { error: "유효한 텍스트 채널이 아닙니다." }); return; }
-                const normalizedColor = typeof body.color === "string" ? body.color.trim().replace(/^#/, "") : "5865F2";
-                if (!/^[0-9a-fA-F]{6}$/.test(normalizedColor)) { json(res, 400, { error: "색상은 6자리 HEX 형식이어야 합니다." }); return; }
-                const isUrl = (value: unknown) => !value || (typeof value === "string" && /^https?:\\/\\//i.test(value));
-                if (!isUrl(body.thumbnail) || !isUrl(body.image)) { json(res, 400, { error: "이미지 URL은 http 또는 https만 사용할 수 있습니다." }); return; }
-                const embed: any = { title: body.title, description: body.content, color: Number.parseInt(normalizedColor, 16) };
-                if (body.thumbnail) embed.thumbnail = { url: body.thumbnail };
-                if (body.image) embed.image = { url: body.image };
-                if (body.footer) embed.footer = { text: String(body.footer).slice(0, 2048) };
-                await channel.send({ embeds: [embed] });
-                json(res, 200, { ok: true });
-                return;
-            }
-            json(res, 404, { error: "Not Found" });
-        } catch (error) {
-            console.error("[웹 패널] 오류:", error);
-            json(res, 500, { error: "요청 처리 중 오류가 발생했습니다." });
-        }
+    if (!password) { console.warn("⚠️ ADMIN_PASSWORD가 없어 웹 관리자 패널을 시작하지 않습니다."); return; }
+    const port = Number.parseInt(process.env.WEB_PORT || process.env.PORT || "3000",10) || 3000;
+    const server = createServer(async (req,res)=>{
+        try{
+            const url = new URL(req.url||"/",`http://${req.headers.host||"localhost"}`);
+            if(req.method==='GET'&&url.pathname==='/admin'){res.writeHead(200,{"Content-Type":"text/html; charset=utf-8","Cache-Control":"no-store","X-Content-Type-Options":"nosniff","X-Frame-Options":"DENY"});res.end(html);return;}
+            if(req.method==='POST'&&url.pathname==='/api/login'){const body=await readBody(req);if(typeof body.password!=='string'||!sameSecret(body.password,password)){json(res,401,{error:'비밀번호가 올바르지 않습니다.'});return;}const token=randomBytes(32).toString('hex');sessions.add(token);res.writeHead(200,{"Content-Type":"application/json; charset=utf-8","Set-Cookie":`studio_session=${token}; HttpOnly; SameSite=Strict; Path=/; Max-Age=86400`,`Cache-Control`:'no-store'});res.end(JSON.stringify({ok:true}));return;}
+            if(req.method==='POST'&&url.pathname==='/api/logout'){const token=getToken(req);if(token)sessions.delete(token);res.writeHead(200,{"Content-Type":"application/json; charset=utf-8","Set-Cookie":'studio_session=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0'});res.end(JSON.stringify({ok:true}));return;}
+            if(!isAuthed(req)){json(res,401,{error:'로그인이 필요합니다.'});return;}
+            if(req.method==='GET'&&url.pathname==='/api/state'){json(res,200,{guilds:getGuildState(client)});return;}
+            if(req.method==='POST'&&url.pathname==='/api/message'){const b=await readBody(req);if(typeof b.content!=='string'||b.content.trim().length===0||b.content.length>2000){json(res,400,{error:'메시지는 1~2000자로 입력해주세요.'});return;}const c=client.channels.cache.get(String(b.channelId));if(!c||!c.isTextBased()||!("send" in c)){json(res,400,{error:'유효한 텍스트 채널이 아닙니다.'});return;}await c.send({content:b.content});json(res,200,{ok:true});return;}
+            if(req.method==='POST'&&url.pathname==='/api/embed'){const b=await readBody(req);if(typeof b.title!=='string'||!b.title.trim()||b.title.length>256){json(res,400,{error:'제목을 확인해주세요.'});return;}if(typeof b.content!=='string'||!b.content.trim()||b.content.length>4096){json(res,400,{error:'내용을 확인해주세요.'});return;}const c=client.channels.cache.get(String(b.channelId));if(!c||!c.isTextBased()||!("send" in c)){json(res,400,{error:'유효한 텍스트 채널이 아닙니다.'});return;}const color=typeof b.color==='string'?b.color.trim().replace(/^#/,""):'5865F2';if(!/^[0-9a-fA-F]{6}$/.test(color)){json(res,400,{error:'색상은 6자리 HEX여야 합니다.'});return;}const validUrl=(v:unknown)=>!v||(typeof v==='string'&&/^https?:\/\//i.test(v));if(!validUrl(b.thumbnail)||!validUrl(b.image)){json(res,400,{error:'이미지 URL은 http 또는 https만 사용할 수 있습니다.'});return;}const e:any={title:b.title,description:b.content,color:Number.parseInt(color,16)};if(b.footer)e.footer={text:String(b.footer).slice(0,2048)};if(b.thumbnail)e.thumbnail={url:b.thumbnail};if(b.image)e.image={url:b.image};await c.send({embeds:[e]});json(res,200,{ok:true});return;}
+            if(req.method==='GET'&&url.pathname==='/api/users'){const gid=String(url.searchParams.get('guildId')||'');const q=String(url.searchParams.get('q')||'').toLowerCase();const g=client.guilds.cache.get(gid);if(!g){json(res,400,{error:'서버를 찾을 수 없습니다.'});return;}await g.members.fetch();const users=g.members.cache.filter(m=>!m.user.bot&&(!q||m.displayName.toLowerCase().includes(q)||m.user.username.toLowerCase().includes(q)||m.id.includes(q))).first(50).map(m=>({id:m.id,displayName:m.displayName,username:m.user.username,joinedAt:m.joinedAt?m.joinedAt.toLocaleDateString('ko-KR'):null}));json(res,200,{users});return;}
+            if(req.method==='POST'&&(url.pathname==='/api/kick'||url.pathname==='/api/ban')){const b=await readBody(req);const g=client.guilds.cache.get(String(b.guildId));if(!g){json(res,400,{error:'서버를 찾을 수 없습니다.'});return;}const member=await g.members.fetch(String(b.userId)).catch(()=>null);if(!member){json(res,400,{error:'사용자를 찾을 수 없습니다.'});return;}if(!member.manageable){json(res,403,{error:'봇이 이 사용자를 관리할 수 없습니다.'});return;}if(url.pathname==='/api/kick')await member.kick('관리자 패널에서 추방');else await member.ban({reason:'관리자 패널에서 차단'});json(res,200,{ok:true});return;}
+            if(req.method==='GET'&&url.pathname==='/api/tickets'){const tickets:any[]=[];for(const g of client.guilds.cache.values()){const setup=(globalThis as any).__studioTicketSystem?.getSetup?.(g.id);const active=(globalThis as any).__studioTicketSystem?.getActiveTickets?.(g.id)||[];for(const t of active){const ch=g.channels.cache.get(t.channelId);tickets.push({guildId:g.id,channelId:t.channelId,channelName:ch?.name||t.channelId,username:t.userId,category:t.category});}}json(res,200,{tickets});return;}
+            if(req.method==='POST'&&url.pathname==='/api/ticket-close'){const b=await readBody(req);const g=client.guilds.cache.get(String(b.guildId));if(!g){json(res,400,{error:'서버를 찾을 수 없습니다.'});return;}const c=g.channels.cache.get(String(b.channelId));if(!c||c.type!==ChannelType.GuildText){json(res,400,{error:'티켓 채널을 찾을 수 없습니다.'});return;}await c.delete('관리자 패널에서 티켓 종료');json(res,200,{ok:true});return;}
+            json(res,404,{error:'Not Found'});
+        }catch(error){console.error('[웹 패널] 오류:',error);json(res,500,{error:'요청 처리 중 오류가 발생했습니다.'});}
     });
-    server.listen(port, "0.0.0.0", () => console.log(`🌐 관리자 패널: http://0.0.0.0:${port}/admin`));
+    server.listen(port,'0.0.0.0',()=>console.log(`🌐 관리자 패널: http://0.0.0.0:${port}/admin`));
 }
