@@ -4,19 +4,14 @@ import { commands } from "./commands";
 
 const commandsData = Object.values(commands).map((command) => command.data.toJSON());
 const rest = new REST({ version: "10" }).setToken(config.DISCORD_TOKEN);
-const GUILD_ID = process.env.DISCORD_GUILD_ID;
 
 export async function deployCommands() {
-    if (!GUILD_ID) {
-        throw new Error("Missing DISCORD_GUILD_ID environment variable");
-    }
-
-    console.log("Started refreshing application (/) commands for the server.");
+    console.log("Started refreshing application (/) commands globally.");
 
     await rest.put(
-        Routes.applicationGuildCommands(config.DISCORD_CLIENT_ID, GUILD_ID),
+        Routes.applicationCommands(config.DISCORD_CLIENT_ID),
         { body: commandsData }
     );
 
-    console.log("Successfully reloaded application (/) commands for the server.");
+    console.log("Successfully reloaded application (/) commands globally.");
 }
