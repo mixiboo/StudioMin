@@ -71,35 +71,43 @@ client.once(discord_js_1.Events.ClientReady, async () => {
     catch (error) {
         console.error("❌ 슬래시 명령어 배포 실패:", error);
     }
+    startWebPanel_1.startWebPanel(client);
     (0, scheduler_1.startScheduledJobs)(client);
-    (0, webPanel_1.startWebPanel)(client);
     console.log("스케줄러가 시작되었습니다.");
 });
 client.on(discord_js_1.Events.InteractionCreate, async (interaction) => {
     try {
-        if (!interaction.isChatInputCommand())
-            return;
-        const command = commands_1.commands[interaction.commandName];
-        if (!command) {
-            console.error(`❌ 등록되지 않은 명령어 실행: ${interaction.commandName}`);
-            if (!interaction.replied && !interaction.deferred) {
-                await interaction.reply({ content: "❌ 이 명령어를 찾을 수 없습니다. 봇을 다시 시작해주세요.", ephemeral: true });
+        if (interaction.isChatInputCommand()) {
+            const command = commands_1.commands[interaction.commandName];
+            if (!command) {
+                console.error(`❌ 등록되지 않은 명령어 실행: ${interaction.commandName}`);
+                if (!interaction.replied && !interaction.deferred) {
+                    await interaction.reply({ content: "❌ 이 명령어를 찾을 수 없습니다. 봇을 다시 시작해주세요.", ephemeral: true });
+                }
+                return;
+            }
+            try {
+                await command.execute(interaction);
+            }
+            catch (error) {
+                console.error(`❌ Error executing command ${interaction.commandName}:`, error);
+                if (!interaction.replied && !interaction.deferred) {
+                    await interaction.reply({ content: "❌ 명령어 실행 중 오류가 발생했습니다.", ephemeral: true }).catch(console.error);
+                }
+                else if (interaction.deferred) {
+                    await interaction.editReply({ content: "❌ 명령어 실행 중 오류가 발생했습니다." }).catch(console.error);
+                }
             }
             return;
         }
-        try {
-            await command.execute(interaction);
+        if (interaction.isStringSelectMenu() && interaction.customId === 'create-ticket-menu') {
+            await (0, require("./events/ticketInteractions").handleTicketMenuInteraction)(interaction);
+            return;
         }
-        catch (error) {
-            console.error(`❌ Error executing command ${interaction.commandName}:`, error);
-            if (!interaction.replied && !interaction.deferred) {
-                await interaction.reply({ content: "❌ 명령어 실행 중 오류가 발생했습니다.", ephemeral: true }).catch(console.error);
-            }
-            else if (interaction.deferred) {
-                await interaction.editReply({ content: "❌ 명령어 실행 중 오류가 발생했습니다." }).catch(console.error);
-            }
+        if (interaction.isButton() && interaction.customId === 'close-ticket-button') {
+            await interaction.deferReply();
+            await (0, require("./commands/ticket").closeTicket)(interaction);
         }
-        return;
     }
     catch (error) {
         console.error('❌ Error handling interaction:', error);
@@ -123,9 +131,9 @@ client.on(discord_js_1.Events.GuildBanRemove, guildBanRemove_1.handleGuildBanRem
 client.on(discord_js_1.Events.ChannelCreate, channelCreate_1.handleChannelCreate);
 client.on(discord_js_1.Events.ChannelDelete, channelDelete_1.handleChannelDelete);
 client.on(discord_js_1.Events.ChannelUpdate, channelUpdate_1.handleChannelUpdate);
-client.on(discord_js_1.Events.GuildRoleCreate, roleCreate_1.handleGuildRoleCreate);
-client.on(discord_js_1.Events.GuildRoleDelete, roleDelete_1.handleGuildRoleDelete);
-client.on(discord_js_1.Events.GuildRoleUpdate, roleUpdate_1.handleGuildRoleUpdate);
+client.on(discord_js_1.Events.GuildRoleCreate, roleCreate_1.handleRoleCreate);
+client.on(discord_js_1.Events.GuildRoleDelete, roleDelete_1.handleRoleDelete);
+client.on(discord_js_1.Events.GuildRoleUpdate, roleUpdate_1.handleRoleUpdate);
 client.on(discord_js_1.Events.VoiceStateUpdate, voiceStateUpdate_1.handleVoiceStateUpdate);
 client.on(discord_js_1.Events.InviteCreate, inviteCreate_1.handleInviteCreate);
 client.on(discord_js_1.Events.InviteDelete, inviteDelete_1.handleInviteDelete);
