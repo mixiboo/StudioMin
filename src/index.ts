@@ -44,9 +44,13 @@ client.once(Events.ClientReady, async () => {
     console.log(`Logged in as ${client.user!.tag}!`);
     client.user?.setActivity('Activity', { type: 3 });
 
-    console.log("Started refreshing application (/) commands.");
-    await deployCommands();
-    console.log("Successfully reloaded application (/) commands.");
+    try {
+        console.log("Started refreshing application (/) commands.");
+        await deployCommands();
+        console.log("Successfully reloaded application (/) commands.");
+    } catch (error) {
+        console.error("❌ 슬래시 명령어 배포 실패:", error);
+    }
 
     startScheduledJobs(client);
     restoreGiveaways(client);
@@ -57,24 +61,47 @@ client.on(Events.InteractionCreate, async (interaction) => {
     try {
         if (interaction.isChatInputCommand()) {
             const command = commands[interaction.commandName as keyof typeof commands];
-            if (!command) return;
-            await command.execute(interaction).catch(async (error) => {
-                console.error(`Error executing command ${interaction.commandName}:`, error);
+
+            if (!command) {
+                console.error(`❌ 등록되지 않은 명령어 실행: ${interaction.commandName}`);
                 if (!interaction.replied && !interaction.deferred) {
-                    await interaction.reply({ content:'명령어 실행 중 오류가 발생했습니다.', ephemeral:true });
+                    await interaction.reply({ content: "❌ 이 명령어를 찾을 수 없습니다. 봇을 다시 시작해주세요.", ephemeral: true });
                 }
-            });
+                return;
+            }
+
+            try {
+                await command.execute(interaction);
+            } catch (error) {
+                console.error(`❌ Error executing command ${interaction.commandName}:`, error);
+
+                if (!interaction.replied && !interaction.deferred) {
+                    await interaction.reply({ content: "❌ 명령어 실행 중 오류가 발생했습니다.", ephemeral: true }).catch(console.error);
+                } else if (interaction.deferred) {
+                    await interaction.editReply({ content: "❌ 명령어 실행 중 오류가 발생했습니다." }).catch(console.error);
+                }
+            }
             return;
         }
+
         if (interaction.isStringSelectMenu() && interaction.customId === 'create-ticket-menu') {
             await handleTicketMenuInteraction(interaction);
             return;
         }
+
         if (interaction.isButton() && interaction.customId === 'close-ticket-button') {
             await interaction.deferReply();
             await closeTicket(interaction);
         }
-    } catch (error) { console.error('Error handling interaction:', error); }
+    } catch (error) {
+        console.error('❌ Error handling interaction:', error);
+
+        if (!interaction.replied && !interaction.deferred) {
+            await interaction.reply({ content: '❌ 요청을 처리하는 중 오류가 발생했습니다.', ephemeral: true }).catch(console.error);
+        } else if (interaction.deferred) {
+            await interaction.editReply({ content: '❌ 요청을 처리하는 중 오류가 발생했습니다.' }).catch(console.error);
+        }
+    }
 });
 
 client.on(Events.MessageCreate, handleMessageCreate);
@@ -103,4 +130,4 @@ client.on(Events.GuildStickerDelete, handleStickerDelete);
 client.on(Events.GuildStickerUpdate, handleStickerUpdate);
 client.on(Events.MessageReactionAdd, handleMessageReactionAdd);
 client.on(Events.MessageReactionRemove, handleMessageReactionRemove);
-client.login(config.DISCORD_TOKEN).then(() => console.log("봇이 시작되었습니다."));
+client.login(config.DISCORD_TOKEN).then(() => console.log("봇이 시작되었습니다.")).catch((error) => console.error("❌ 봇 로그인 실패:", error));
