@@ -5,6 +5,7 @@ const config_1 = require("./config");
 const commands_1 = require("./commands");
 const deploy_commands_1 = require("./deploy-commands");
 const scheduler_1 = require("./scheduler");
+const webPanel_1 = require("./webPanel");
 const messageReactionAdd_1 = require("./events/messageReactionAdd");
 const messageReactionRemove_1 = require("./events/messageReactionRemove");
 const messageCreate_1 = require("./events/messageCreate");
@@ -58,14 +59,20 @@ const client = new discord_js_1.Client({
         discord_js_1.Partials.GuildScheduledEvent
     ]
 });
-client.once(discord_js_1.Events.ClientReady, () => {
+client.once(discord_js_1.Events.ClientReady, async () => {
     console.log(`Discord bot is ready! 🤖`);
     console.log(`Logged in as ${client.user.tag}!`);
     client.user?.setActivity('Activity', { type: 3 });
-    console.log("Started refreshing application (/) commands.");
-    (0, deploy_commands_1.deployCommands)();
-    console.log("Successfully reloaded application (/) commands.");
+    try {
+        console.log("Started refreshing application (/) commands.");
+        await (0, deploy_commands_1.deployCommands)();
+        console.log("Successfully reloaded application (/) commands.");
+    }
+    catch (error) {
+        console.error("❌ 슬래시 명령어 배포 실패:", error);
+    }
     (0, scheduler_1.startScheduledJobs)(client);
+    (0, webPanel_1.startWebPanel)(client);
     console.log("스케줄러가 시작되었습니다.");
 });
 client.on(discord_js_1.Events.InteractionCreate, async (interaction) => {
@@ -73,19 +80,35 @@ client.on(discord_js_1.Events.InteractionCreate, async (interaction) => {
         if (!interaction.isChatInputCommand())
             return;
         const command = commands_1.commands[interaction.commandName];
-        if (!command)
+        if (!command) {
+            console.error(`❌ 등록되지 않은 명령어 실행: ${interaction.commandName}`);
+            if (!interaction.replied && !interaction.deferred) {
+                await interaction.reply({ content: "❌ 이 명령어를 찾을 수 없습니다. 봇을 다시 시작해주세요.", ephemeral: true });
+            }
             return;
-        await command.execute(interaction).catch(async (error) => {
-            console.error(`Error executing command ${interaction.commandName}:`, error);
-            const replyMethod = interaction.replied ? 'followUp' : 'reply';
-            await interaction[replyMethod]({
-                content: '명령어 실행 중 오류가 발생했습니다.',
-                ephemeral: true
-            });
-        });
+        }
+        try {
+            await command.execute(interaction);
+        }
+        catch (error) {
+            console.error(`❌ Error executing command ${interaction.commandName}:`, error);
+            if (!interaction.replied && !interaction.deferred) {
+                await interaction.reply({ content: "❌ 명령어 실행 중 오류가 발생했습니다.", ephemeral: true }).catch(console.error);
+            }
+            else if (interaction.deferred) {
+                await interaction.editReply({ content: "❌ 명령어 실행 중 오류가 발생했습니다." }).catch(console.error);
+            }
+        }
+        return;
     }
     catch (error) {
-        console.error('Error handling interaction:', error);
+        console.error('❌ Error handling interaction:', error);
+        if (!interaction.replied && !interaction.deferred) {
+            await interaction.reply({ content: '❌ 요청을 처리하는 중 오류가 발생했습니다.', ephemeral: true }).catch(console.error);
+        }
+        else if (interaction.deferred) {
+            await interaction.editReply({ content: '❌ 요청을 처리하는 중 오류가 발생했습니다.' }).catch(console.error);
+        }
     }
 });
 client.on(discord_js_1.Events.MessageCreate, messageCreate_1.handleMessageCreate);
@@ -100,24 +123,18 @@ client.on(discord_js_1.Events.GuildBanRemove, guildBanRemove_1.handleGuildBanRem
 client.on(discord_js_1.Events.ChannelCreate, channelCreate_1.handleChannelCreate);
 client.on(discord_js_1.Events.ChannelDelete, channelDelete_1.handleChannelDelete);
 client.on(discord_js_1.Events.ChannelUpdate, channelUpdate_1.handleChannelUpdate);
-client.on(discord_js_1.Events.GuildRoleCreate, roleCreate_1.handleRoleCreate);
-client.on(discord_js_1.Events.GuildRoleDelete, roleDelete_1.handleRoleDelete);
-client.on(discord_js_1.Events.GuildRoleUpdate, roleUpdate_1.handleRoleUpdate);
+client.on(discord_js_1.Events.GuildRoleCreate, roleCreate_1.handleGuildRoleCreate);
+client.on(discord_js_1.Events.GuildRoleDelete, roleDelete_1.handleGuildRoleDelete);
+client.on(discord_js_1.Events.GuildRoleUpdate, roleUpdate_1.handleGuildRoleUpdate);
 client.on(discord_js_1.Events.VoiceStateUpdate, voiceStateUpdate_1.handleVoiceStateUpdate);
 client.on(discord_js_1.Events.InviteCreate, inviteCreate_1.handleInviteCreate);
 client.on(discord_js_1.Events.InviteDelete, inviteDelete_1.handleInviteDelete);
-client.on(discord_js_1.Events.GuildEmojiCreate, emojiCreate_1.handleEmojiCreate);
-client.on(discord_js_1.Events.GuildEmojiDelete, emojiDelete_1.handleEmojiDelete);
-client.on(discord_js_1.Events.GuildEmojiUpdate, emojiUpdate_1.handleEmojiUpdate);
-client.on(discord_js_1.Events.GuildStickerCreate, stickerCreate_1.handleStickerCreate);
-client.on(discord_js_1.Events.GuildStickerDelete, stickerDelete_1.handleStickerDelete);
-client.on(discord_js_1.Events.GuildStickerUpdate, stickerUpdate_1.handleStickerUpdate);
-client.on(discord_js_1.Events.MessageCreate, messageCreate_1.handleMessageCreate);
-client.on(discord_js_1.Events.MessageDelete, messageDelete_1.handleMessageDelete);
-client.on(discord_js_1.Events.MessageUpdate, messageUpdate_1.handleMessageUpdate);
-client.on(discord_js_1.Events.MessageBulkDelete, messageDeleteBulk_1.handleMessageDeleteBulk);
+client.on(discord_js_1.Events.GuildEmojiCreate, emojiCreate_1.handleGuildEmojiCreate);
+client.on(discord_js_1.Events.GuildEmojiDelete, emojiDelete_1.handleGuildEmojiDelete);
+client.on(discord_js_1.Events.GuildEmojiUpdate, emojiUpdate_1.handleGuildEmojiUpdate);
+client.on(discord_js_1.Events.GuildStickerCreate, stickerCreate_1.handleGuildStickerCreate);
+client.on(discord_js_1.Events.GuildStickerDelete, stickerDelete_1.handleGuildStickerDelete);
+client.on(discord_js_1.Events.GuildStickerUpdate, stickerUpdate_1.handleGuildStickerUpdate);
 client.on(discord_js_1.Events.MessageReactionAdd, messageReactionAdd_1.handleMessageReactionAdd);
 client.on(discord_js_1.Events.MessageReactionRemove, messageReactionRemove_1.handleMessageReactionRemove);
-client.login(config_1.config.DISCORD_TOKEN).then(() => {
-    console.log("봇이 시작되었습니다.");
-});
+client.login(config_1.config.DISCORD_TOKEN).then(() => console.log("봇이 시작되었습니다.")).catch((error) => console.error("❌ 봇 로그인 실패:", error));
