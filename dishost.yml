@@ -1,0 +1,12 @@
+name: minjunbot-admin
+language: javascript
+startup: npm start
+build: npm run build
+
+env:
+  WEB_PORT: "8080"
+
+# GitHub main 브랜치에 Push할 때 디스호스트가 자동으로 재배포합니다.
+git:
+  autoDeploy: true
+  branch: main
