@@ -35,7 +35,7 @@ const stickerCreate_1 = require("./events/stickerCreate");
 const stickerDelete_1 = require("./events/stickerDelete");
 const stickerUpdate_1 = require("./events/stickerUpdate");
 const giveaway_utils_1 = require("./giveaway-utils");
-const client = new discord_js1.Client({
+const client = new discord_js_1.Client({
     intents: [
         "Guilds",
         "GuildMessages",
@@ -137,13 +137,13 @@ client.on(discord_js_1.Events.ChannelDelete, channelDelete_1.handleChannelDelete
 client.on(discord_js_1.Events.ChannelUpdate, channelUpdate_1.handleChannelUpdate);
 client.on(discord_js_1.Events.GuildRoleCreate, roleCreate_1.handleRoleCreate);
 client.on(discord_js_1.Events.GuildRoleDelete, roleDelete_1.handleRoleDelete);
-client.on(discord_js_1.Events.GuildRoleUpdate, roleUpdate_1.handleRoleUpdate);
+client.on(discord_js_1.Events.GuildRoleUpdate, roleUpdate_1.handleGuildRoleUpdate);
 client.on(discord_js_1.Events.VoiceStateUpdate, voiceStateUpdate_1.handleVoiceStateUpdate);
 client.on(discord_js_1.Events.InviteCreate, inviteCreate_1.handleInviteCreate);
 client.on(discord_js_1.Events.InviteDelete, inviteDelete_1.handleInviteDelete);
 client.on(discord_js_1.Events.GuildEmojiCreate, emojiCreate_1.handleEmojiCreate);
-client.on(discord_js_1.Events.GuildEmojiDelete, emojiDelete_1.handleEmojiDelete);
-client.on(discord_js_1.Events.GuildEmojiUpdate, emojiUpdate_1.handleEmojiUpdate);
+client.on(discord_js_1.Events.GuildEmojiDelete, emojiDelete_1.handleGuildEmojiDelete);
+client.on(discord_js_1.Events.GuildEmojiUpdate, emojiUpdate_1.handleGuildEmojiUpdate);
 client.on(discord_js_1.Events.GuildStickerCreate, stickerCreate_1.handleStickerCreate);
 client.on(discord_js_1.Events.GuildStickerDelete, stickerDelete_1.handleStickerDelete);
 client.on(discord_js_1.Events.GuildStickerUpdate, stickerUpdate_1.handleStickerUpdate);
