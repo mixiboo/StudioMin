@@ -50,6 +50,9 @@ class TicketSystemManager {
     getTicketByChannel(guildId, channelId) {
         return this.data[guildId]?.activeTickets.find(t => t.channelId === channelId);
     }
+    getActiveTickets(guildId) {
+        return this.data[guildId]?.activeTickets.filter(t => t.active) ?? [];
+    }
     closeTicket(guildId, channelId) {
         const g = this.data[guildId];
         if (!g)
