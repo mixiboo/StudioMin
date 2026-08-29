@@ -69,7 +69,7 @@ client.once(discord_js_1.Events.ClientReady, async () => {
     console.log(`Logged in as ${client.user.tag}!`);
     client.user?.setActivity('Activity', { type: 3 });
     try {
-        console.log("Started refreshing application (/ ) commands.");
+        console.log("Started refreshing application (/) commands.");
         await (0, deploy_commands_1.deployCommands)();
         console.log("Successfully reloaded application (/) commands.");
     }
@@ -137,8 +137,8 @@ client.on(discord_js_1.Events.GuildBanRemove, guildBanRemove_1.handleGuildBanRem
 client.on(discord_js_1.Events.ChannelCreate, channelCreate_1.handleChannelCreate);
 client.on(discord_js_1.Events.ChannelDelete, channelDelete_1.handleChannelDelete);
 client.on(discord_js_1.Events.ChannelUpdate, channelUpdate_1.handleChannelUpdate);
-client.on(discord_js_1.Events.GuildRoleCreate, roleCreate_1.handleGuildRoleCreate);
-client.on(discord_js_1.Events.GuildRoleDelete, roleDelete_1.handleGuildRoleDelete);
+client.on(discord_js_1.Events.GuildRoleCreate, roleCreate_1.handleRoleCreate);
+client.on(discord_js_1.Events.GuildRoleDelete, roleDelete_1.handleRoleDelete);
 client.on(discord_js_1.Events.GuildRoleUpdate, roleUpdate_1.handleRoleUpdate);
 client.on(discord_js_1.Events.VoiceStateUpdate, voiceStateUpdate_1.handleVoiceStateUpdate);
 client.on(discord_js_1.Events.InviteCreate, inviteCreate_1.handleInviteCreate);
