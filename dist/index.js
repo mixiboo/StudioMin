@@ -8,6 +8,8 @@ const scheduler_1 = require("./scheduler");
 const webPanel_1 = require("./webPanel");
 const messageReactionAdd_1 = require("./events/messageReactionAdd");
 const messageReactionRemove_1 = require("./events/messageReactionRemove");
+const ticketInteractions_1 = require("./events/ticketInteractions");
+const ticket_1 = require("./commands/ticket");
 const messageCreate_1 = require("./events/messageCreate");
 const messageDelete_1 = require("./events/messageDelete");
 const messageUpdate_1 = require("./events/messageUpdate");
@@ -32,7 +34,8 @@ const emojiUpdate_1 = require("./events/emojiUpdate");
 const stickerCreate_1 = require("./events/stickerCreate");
 const stickerDelete_1 = require("./events/stickerDelete");
 const stickerUpdate_1 = require("./events/stickerUpdate");
-const client = new discord_js_1.Client({
+const giveaway_utils_1 = require("./giveaway-utils");
+const client = new discord_js1.Client({
     intents: [
         "Guilds",
         "GuildMessages",
@@ -73,6 +76,7 @@ client.once(discord_js_1.Events.ClientReady, async () => {
     }
     startWebPanel_1.startWebPanel(client);
     (0, scheduler_1.startScheduledJobs)(client);
+    (0, giveaway_utils_1.restoreGiveaways)(client);
     console.log("스케줄러가 시작되었습니다.");
 });
 client.on(discord_js_1.Events.InteractionCreate, async (interaction) => {
@@ -101,12 +105,12 @@ client.on(discord_js_1.Events.InteractionCreate, async (interaction) => {
             return;
         }
         if (interaction.isStringSelectMenu() && interaction.customId === 'create-ticket-menu') {
-            await (0, require("./events/ticketInteractions").handleTicketMenuInteraction)(interaction);
+            await (0, ticketInteractions_1.handleTicketMenuInteraction)(interaction);
             return;
         }
         if (interaction.isButton() && interaction.customId === 'close-ticket-button') {
             await interaction.deferReply();
-            await (0, require("./commands/ticket").closeTicket)(interaction);
+            await (0, ticket_1.closeTicket)(interaction);
         }
     }
     catch (error) {
@@ -137,12 +141,12 @@ client.on(discord_js_1.Events.GuildRoleUpdate, roleUpdate_1.handleRoleUpdate);
 client.on(discord_js_1.Events.VoiceStateUpdate, voiceStateUpdate_1.handleVoiceStateUpdate);
 client.on(discord_js_1.Events.InviteCreate, inviteCreate_1.handleInviteCreate);
 client.on(discord_js_1.Events.InviteDelete, inviteDelete_1.handleInviteDelete);
-client.on(discord_js_1.Events.GuildEmojiCreate, emojiCreate_1.handleGuildEmojiCreate);
-client.on(discord_js_1.Events.GuildEmojiDelete, emojiDelete_1.handleGuildEmojiDelete);
-client.on(discord_js_1.Events.GuildEmojiUpdate, emojiUpdate_1.handleGuildEmojiUpdate);
-client.on(discord_js_1.Events.GuildStickerCreate, stickerCreate_1.handleGuildStickerCreate);
-client.on(discord_js_1.Events.GuildStickerDelete, stickerDelete_1.handleGuildStickerDelete);
-client.on(discord_js_1.Events.GuildStickerUpdate, stickerUpdate_1.handleGuildStickerUpdate);
+client.on(discord_js_1.Events.GuildEmojiCreate, emojiCreate_1.handleEmojiCreate);
+client.on(discord_js_1.Events.GuildEmojiDelete, emojiDelete_1.handleEmojiDelete);
+client.on(discord_js_1.Events.GuildEmojiUpdate, emojiUpdate_1.handleEmojiUpdate);
+client.on(discord_js_1.Events.GuildStickerCreate, stickerCreate_1.handleStickerCreate);
+client.on(discord_js_1.Events.GuildStickerDelete, stickerDelete_1.handleStickerDelete);
+client.on(discord_js_1.Events.GuildStickerUpdate, stickerUpdate_1.handleStickerUpdate);
 client.on(discord_js_1.Events.MessageReactionAdd, messageReactionAdd_1.handleMessageReactionAdd);
 client.on(discord_js_1.Events.MessageReactionRemove, messageReactionRemove_1.handleMessageReactionRemove);
 client.login(config_1.config.DISCORD_TOKEN).then(() => console.log("봇이 시작되었습니다.")).catch((error) => console.error("❌ 봇 로그인 실패:", error));
