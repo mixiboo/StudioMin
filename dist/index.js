@@ -67,16 +67,16 @@ client.once(discord_js_1.Events.ClientReady, async () => {
     console.log(`Logged in as ${client.user.tag}!`);
     client.user?.setActivity('Activity', { type: 3 });
     try {
-        console.log("Started refreshing application (/) commands.");
+        console.log("Started refreshing application (/ ) commands.");
         await (0, deploy_commands_1.deployCommands)();
         console.log("Successfully reloaded application (/) commands.");
     }
     catch (error) {
         console.error("❌ 슬래시 명령어 배포 실패:", error);
     }
-    startWebPanel_1.startWebPanel(client);
     (0, scheduler_1.startScheduledJobs)(client);
     (0, giveaway_utils_1.restoreGiveaways)(client);
+    (0, webPanel_1.startWebPanel)(client);
     console.log("스케줄러가 시작되었습니다.");
 });
 client.on(discord_js_1.Events.InteractionCreate, async (interaction) => {
@@ -137,13 +137,13 @@ client.on(discord_js_1.Events.ChannelDelete, channelDelete_1.handleChannelDelete
 client.on(discord_js_1.Events.ChannelUpdate, channelUpdate_1.handleChannelUpdate);
 client.on(discord_js_1.Events.GuildRoleCreate, roleCreate_1.handleRoleCreate);
 client.on(discord_js_1.Events.GuildRoleDelete, roleDelete_1.handleRoleDelete);
-client.on(discord_js_1.Events.GuildRoleUpdate, roleUpdate_1.handleGuildRoleUpdate);
+client.on(discord_js_1.Events.GuildRoleUpdate, roleUpdate_1.handleRoleUpdate);
 client.on(discord_js_1.Events.VoiceStateUpdate, voiceStateUpdate_1.handleVoiceStateUpdate);
 client.on(discord_js_1.Events.InviteCreate, inviteCreate_1.handleInviteCreate);
 client.on(discord_js_1.Events.InviteDelete, inviteDelete_1.handleInviteDelete);
 client.on(discord_js_1.Events.GuildEmojiCreate, emojiCreate_1.handleEmojiCreate);
-client.on(discord_js_1.Events.GuildEmojiDelete, emojiDelete_1.handleGuildEmojiDelete);
-client.on(discord_js_1.Events.GuildEmojiUpdate, emojiUpdate_1.handleGuildEmojiUpdate);
+client.on(discord_js_1.Events.GuildEmojiDelete, emojiDelete_1.handleEmojiDelete);
+client.on(discord_js_1.Events.GuildEmojiUpdate, emojiUpdate_1.handleEmojiUpdate);
 client.on(discord_js_1.Events.GuildStickerCreate, stickerCreate_1.handleStickerCreate);
 client.on(discord_js_1.Events.GuildStickerDelete, stickerDelete_1.handleStickerDelete);
 client.on(discord_js_1.Events.GuildStickerUpdate, stickerUpdate_1.handleStickerUpdate);
