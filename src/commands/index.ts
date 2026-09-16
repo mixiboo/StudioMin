@@ -14,6 +14,7 @@ import * as ticketSetup from "./ticket-setup";
 import * as giveaway from "./giveaway";
 import * as message from "./message";
 import * as embed from "./embed";
+import * as composio from "./composio";
 
 export const commands = {
     ping,
@@ -32,4 +33,5 @@ export const commands = {
     giveaway,
     message,
     embed,
+    composio,
 };
